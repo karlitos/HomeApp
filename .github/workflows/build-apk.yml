@@ -1,0 +1,43 @@
+name: Build Debug APK
+
+# Builds an installable debug APK and uploads it as a downloadable artifact.
+# Debug builds are auto-signed by Gradle with the standard Android debug key,
+# so no signing secrets are required. Trigger manually or on push to this branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - combined/af2
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
